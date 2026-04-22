@@ -1,120 +1,642 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>StudyBuddy AI 🎓</title>
+  <title>StudyBuddy AI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <style>
+    :root {
+      --bg: #06060f;
+      --surface: #0e0e1c;
+      --surface2: #161628;
+      --border: rgba(255,255,255,0.06);
+      --accent: #7c6aff;
+      --accent2: #ff6a9e;
+      --accent3: #6affda;
+      --text: #f0eeff;
+      --muted: #6a6a8a;
+      --glow: rgba(124,106,255,0.18);
+    }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Segoe UI', sans-serif; background: #f0f4ff; color: #333; }
-    header { background: #4f46e5; color: white; padding: 20px 40px; }
-    header h1 { font-size: 1.8rem; }
-    header p { opacity: 0.85; font-size: 0.95rem; }
-    .container { max-width: 800px; margin: 30px auto; padding: 0 20px; }
-    .card { background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
-    h2 { margin-bottom: 14px; color: #4f46e5; font-size: 1.1rem; }
-    input[type="file"] { margin-bottom: 10px; width: 100%; }
-    button { background: #4f46e5; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 0.95rem; margin-top: 8px; }
-    button:hover { background: #4338ca; }
-    textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.9rem; resize: vertical; }
-    .output { margin-top: 16px; background: #f8f9ff; border-left: 4px solid #4f46e5; padding: 14px; border-radius: 6px; white-space: pre-wrap; font-size: 0.9rem; line-height: 1.6; }
-    .status { font-size: 0.85rem; color: #6b7280; margin-top: 6px; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── 3D HERO ── */
+    #hero {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    #three-canvas {
+      position: absolute;
+      inset: 0; width: 100%; height: 100%;
+    }
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      padding: 0 24px;
+      pointer-events: none;
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(124,106,255,0.12);
+      border: 1px solid rgba(124,106,255,0.3);
+      color: var(--accent);
+      font-size: 0.72rem;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding: 7px 16px;
+      border-radius: 100px;
+      margin-bottom: 28px;
+      animation: fadeDown 1s 0.2s ease both;
+    }
+    .live-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent3);
+      animation: pulse 2s ease infinite;
+    }
+    .hero-title {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(3rem, 8vw, 6rem);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 0.95;
+      margin-bottom: 24px;
+      animation: fadeDown 1s 0.35s ease both;
+    }
+    .hero-title .line1 {
+      display: block;
+      background: linear-gradient(135deg, #fff 0%, #c8c0ff 50%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-title .line2 {
+      display: block;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 60%, var(--accent3) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-sub {
+      font-size: 1.05rem;
+      color: var(--muted);
+      font-weight: 300;
+      max-width: 420px;
+      margin: 0 auto 40px;
+      line-height: 1.7;
+      animation: fadeDown 1s 0.5s ease both;
+    }
+    .hero-cta {
+      pointer-events: all;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--accent);
+      color: white;
+      font-family: 'Syne', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      padding: 15px 32px;
+      border-radius: 100px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 0 40px rgba(124,106,255,0.4), 0 8px 32px rgba(0,0,0,0.4);
+      transition: all 0.3s;
+      animation: fadeDown 1s 0.65s ease both;
+      text-decoration: none;
+    }
+    .hero-cta:hover {
+      background: #9080ff;
+      box-shadow: 0 0 60px rgba(124,106,255,0.6), 0 8px 40px rgba(0,0,0,0.5);
+      transform: translateY(-2px);
+    }
+    .scroll-indicator {
+      position: absolute;
+      bottom: 36px; left: 50%;
+      transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      z-index: 2;
+      animation: fadeDown 1s 1s ease both;
+    }
+    .scroll-indicator span {
+      font-size: 0.68rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .scroll-line {
+      width: 1px; height: 40px;
+      background: linear-gradient(to bottom, var(--accent), transparent);
+      animation: scrollPulse 2s ease infinite;
+    }
+
+    /* ── MAIN ── */
+    .main { position: relative; z-index: 1; }
+    .main::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.012) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.012) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none; z-index: 0;
+    }
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 80px 24px 100px;
+      position: relative; z-index: 1;
+    }
+    .section-label {
+      display: flex; align-items: center; gap: 14px;
+      margin-bottom: 40px;
+    }
+    .section-label h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.6rem; font-weight: 800; letter-spacing: -0.03em;
+    }
+    .section-label .tag {
+      background: rgba(106,255,218,0.1);
+      border: 1px solid rgba(106,255,218,0.2);
+      color: var(--accent3);
+      font-size: 0.7rem; font-family: 'Syne', sans-serif;
+      font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 4px 10px; border-radius: 100px;
+    }
+
+    /* ── STEPS ── */
+    .steps { display: flex; gap: 0; margin-bottom: 36px; }
+    .step-item {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; gap: 8px; position: relative;
+    }
+    .step-item:not(:last-child)::after {
+      content: ''; position: absolute;
+      top: 14px; left: 50%; width: 100%; height: 1px;
+      background: var(--border); transition: background 0.4s;
+    }
+    .step-item.done:not(:last-child)::after { background: rgba(106,255,218,0.3); }
+    .step-num {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--surface2); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.72rem; font-family: 'Syne', sans-serif; font-weight: 700;
+      color: var(--muted); position: relative; z-index: 1; transition: all 0.4s;
+    }
+    .step-item.active .step-num { background: var(--accent); border-color: var(--accent); color: white; box-shadow: 0 0 20px rgba(124,106,255,0.6); }
+    .step-item.done .step-num   { background: var(--accent3); border-color: var(--accent3); color: var(--bg); }
+    .step-label { font-size: 0.68rem; color: var(--muted); font-weight: 500; letter-spacing: 0.04em; }
+    .step-item.active .step-label { color: var(--accent); }
+    .step-item.done .step-label   { color: var(--accent3); }
+
+    /* ── CARDS ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 22px; padding: 32px;
+      margin-bottom: 14px; position: relative;
+      overflow: hidden;
+      transition: border-color 0.4s, box-shadow 0.4s, transform 0.3s;
+    }
+    .card:hover {
+      border-color: rgba(124,106,255,0.2);
+      box-shadow: 0 8px 48px var(--glow), inset 0 1px 0 rgba(255,255,255,0.04);
+      transform: translateY(-2px);
+    }
+    .card::before {
+      content: ''; position: absolute;
+      top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(124,106,255,0.5), transparent);
+      opacity: 0; transition: opacity 0.4s;
+    }
+    .card:hover::before { opacity: 1; }
+    .card::after {
+      content: ''; position: absolute;
+      top: 0; right: 0; width: 80px; height: 80px;
+      background: radial-gradient(circle at top right, rgba(124,106,255,0.07), transparent 70%);
+      pointer-events: none;
+    }
+    .card-header { display: flex; align-items: center; gap: 16px; margin-bottom: 26px; }
+    .card-icon {
+      width: 44px; height: 44px; border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.15rem; flex-shrink: 0;
+    }
+    .card-icon.purple { background: rgba(124,106,255,0.18); box-shadow: 0 4px 16px rgba(124,106,255,0.2); }
+    .card-icon.pink   { background: rgba(255,106,158,0.18); box-shadow: 0 4px 16px rgba(255,106,158,0.2); }
+    .card-icon.teal   { background: rgba(106,255,218,0.18); box-shadow: 0 4px 16px rgba(106,255,218,0.2); }
+    .card-icon.orange { background: rgba(255,178,106,0.18); box-shadow: 0 4px 16px rgba(255,178,106,0.2); }
+    .card-title { font-family: 'Syne', sans-serif; font-size: 1.05rem; font-weight: 700; letter-spacing: -0.01em; }
+    .card-subtitle { font-size: 0.8rem; color: var(--muted); margin-top: 3px; font-weight: 300; }
+
+    /* ── UPLOAD ── */
+    .upload-zone {
+      border: 1.5px dashed rgba(124,106,255,0.28);
+      border-radius: 16px; padding: 40px 24px;
+      text-align: center; cursor: pointer;
+      transition: all 0.3s;
+      background: rgba(124,106,255,0.03);
+      position: relative;
+    }
+    .upload-zone:hover, .upload-zone.dragover { border-color: var(--accent); background: rgba(124,106,255,0.07); }
+    .upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+    .upload-icon-wrap {
+      width: 56px; height: 56px;
+      margin: 0 auto 16px;
+      background: rgba(124,106,255,0.12);
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; border: 1px solid rgba(124,106,255,0.2);
+      transition: transform 0.3s;
+    }
+    .upload-zone:hover .upload-icon-wrap { transform: scale(1.08) rotate(-4deg); }
+    .upload-zone h3 { font-family: 'Syne', sans-serif; font-size: 0.95rem; font-weight: 700; margin-bottom: 5px; }
+    .upload-zone p { font-size: 0.8rem; color: var(--muted); font-weight: 300; }
+    .upload-zone p span { color: var(--accent); font-weight: 500; }
+
+    /* ── BUTTONS ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 13px 26px; border-radius: 100px; border: none;
+      font-family: 'Syne', sans-serif; font-size: 0.85rem; font-weight: 700;
+      cursor: pointer; transition: all 0.25s; letter-spacing: 0.02em;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #5a4de0);
+      color: white; box-shadow: 0 4px 20px rgba(124,106,255,0.35);
+    }
+    .btn-primary:hover {
+      box-shadow: 0 4px 32px rgba(124,106,255,0.55);
+      transform: translateY(-2px);
+      background: linear-gradient(135deg, #9080ff, var(--accent));
+    }
+    .btn:active { transform: translateY(0) !important; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
+
+    /* ── STATUS ── */
+    .status-tag {
+      display: inline-flex; align-items: center; gap: 7px;
+      font-size: 0.78rem; padding: 6px 14px;
+      border-radius: 100px; margin-top: 14px; font-weight: 500;
+    }
+    .status-tag.success { background: rgba(106,255,218,0.1); color: var(--accent3); border: 1px solid rgba(106,255,218,0.25); }
+    .status-tag.loading { background: rgba(124,106,255,0.1); color: var(--accent); border: 1px solid rgba(124,106,255,0.25); }
+
+    /* ── OUTPUT ── */
+    .output-box {
+      margin-top: 20px; background: var(--surface2);
+      border: 1px solid var(--border); border-radius: 16px;
+      padding: 22px 26px; font-size: 0.87rem; line-height: 1.8;
+      color: #d0cff0; white-space: pre-wrap; display: none;
+      max-height: 380px; overflow-y: auto;
+      animation: fadeUp 0.4s ease both;
+    }
+    .output-box::-webkit-scrollbar { width: 4px; }
+    .output-box::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 2px; }
+
+    /* ── CHAT ── */
+    .chat-row { display: flex; gap: 10px; }
+    textarea {
+      flex: 1; background: var(--surface2);
+      border: 1px solid var(--border); border-radius: 14px;
+      padding: 14px 18px; color: var(--text);
+      font-family: 'DM Sans', sans-serif; font-size: 0.88rem;
+      resize: none; outline: none; transition: border-color 0.3s; line-height: 1.6;
+    }
+    textarea:focus { border-color: rgba(124,106,255,0.4); }
+    textarea::placeholder { color: var(--muted); }
+
+    /* ── SPINNER ── */
+    .spinner {
+      width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,0.2);
+      border-top-color: white; border-radius: 50%;
+      animation: spin 0.7s linear infinite; flex-shrink: 0;
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeDown { from { opacity:0; transform:translateY(-24px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes fadeUp   { from { opacity:0; transform:translateY(16px);  } to { opacity:1; transform:translateY(0); } }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes pulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.4; transform:scale(0.7); } }
+    @keyframes scrollPulse { 0%,100% { opacity:0.3; } 50% { opacity:1; } }
   </style>
 </head>
 <body>
 
-<header>
-  <h1>📚 StudyBuddy AI</h1>
-  <p>Upload your lecture notes and let AI help you study smarter</p>
-</header>
-
-<div class="container">
-
-  <!-- Upload -->
-  <div class="card">
-    <h2>📄 Step 1: Upload Your PDF</h2>
-    <input type="file" id="pdfFile" accept=".pdf" />
-    <button onclick="uploadPDF()">Upload PDF</button>
-    <p class="status" id="uploadStatus"></p>
+<!-- ══ 3D HERO ══ -->
+<section id="hero">
+  <canvas id="three-canvas"></canvas>
+  <div class="hero-content">
+    <div class="hero-badge">
+      <div class="live-dot"></div>
+      AI-Powered Study Tool
+    </div>
+    <h1 class="hero-title">
+      <span class="line1">Study</span>
+      <span class="line2">Smarter.</span>
+    </h1>
+    <p class="hero-sub">Upload your lecture notes. Get instant summaries, flashcards, quizzes and a personal AI tutor.</p>
+    <a href="#app" class="hero-cta">
+      Get Started
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M8 3v10M8 13l-4-4M8 13l4-4" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </a>
   </div>
-
-  <!-- Summarize -->
-  <div class="card">
-    <h2>🧠 Step 2: Summarize & Get Flashcards</h2>
-    <button onclick="getSummary()">Generate Summary + Flashcards</button>
-    <div class="output" id="summaryOutput" style="display:none"></div>
+  <div class="scroll-indicator">
+    <span>Scroll</span>
+    <div class="scroll-line"></div>
   </div>
+</section>
 
-  <!-- Quiz -->
-  <div class="card">
-    <h2>❓ Step 3: Take a Quiz</h2>
-    <button onclick="getQuiz()">Generate Quiz</button>
-    <div class="output" id="quizOutput" style="display:none"></div>
+<!-- ══ APP ══ -->
+<div class="main" id="app">
+  <div class="container">
+    <div class="section-label">
+      <h2>Your Study Dashboard</h2>
+      <span class="tag">4 Steps</span>
+    </div>
+
+    <div class="steps">
+      <div class="step-item active" id="step1"><div class="step-num">1</div><div class="step-label">Upload</div></div>
+      <div class="step-item" id="step2"><div class="step-num">2</div><div class="step-label">Summarise</div></div>
+      <div class="step-item" id="step3"><div class="step-num">3</div><div class="step-label">Quiz</div></div>
+      <div class="step-item" id="step4"><div class="step-num">4</div><div class="step-label">Chat</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon purple">📄</div>
+        <div><div class="card-title">Upload Your Notes</div><div class="card-subtitle">Drop a PDF and let AI do the heavy lifting</div></div>
+      </div>
+      <div class="upload-zone" id="uploadZone">
+        <input type="file" id="pdfFile" accept=".pdf" onchange="handleFileSelect(this)"/>
+        <div class="upload-icon-wrap">📂</div>
+        <h3 id="uploadZoneTitle">Drop your PDF here</h3>
+        <p>or <span>browse files</span> · PDF only</p>
+      </div>
+      <div id="uploadStatus"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon teal">🧠</div>
+        <div><div class="card-title">Summarise & Flashcards</div><div class="card-subtitle">Get key points and revision cards instantly</div></div>
+      </div>
+      <button class="btn btn-primary" onclick="getSummary()" id="summaryBtn">✦ Generate Summary</button>
+      <div class="output-box" id="summaryOutput"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon pink">❓</div>
+        <div><div class="card-title">Practice Quiz</div><div class="card-subtitle">Test yourself with AI-generated MCQs</div></div>
+      </div>
+      <button class="btn btn-primary" onclick="getQuiz()" id="quizBtn">✦ Generate Quiz</button>
+      <div class="output-box" id="quizOutput"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon orange">💬</div>
+        <div><div class="card-title">Chat With Your Notes</div><div class="card-subtitle">Ask anything — get answers from your material</div></div>
+      </div>
+      <div class="chat-row">
+        <textarea id="chatQuestion" rows="3" placeholder="e.g. What is overfitting and how do I fix it?"></textarea>
+        <button class="btn btn-primary" onclick="chatWithNotes()" id="chatBtn" style="align-self:flex-end;padding:13px 22px;">Ask ↗</button>
+      </div>
+      <div class="output-box" id="chatOutput"></div>
+    </div>
   </div>
-
-  <!-- Chat -->
-  <div class="card">
-    <h2>💬 Step 4: Chat With Your Notes</h2>
-    <textarea id="chatQuestion" rows="3" placeholder="Ask anything about your notes e.g. 'Explain the main algorithm discussed'"></textarea>
-    <button onclick="chatWithNotes()">Ask StudyBuddy</button>
-    <div class="output" id="chatOutput" style="display:none"></div>
-  </div>
-
 </div>
 
+<!-- ══ THREE.JS ══ -->
+<script>
+(function() {
+  const canvas = document.getElementById('three-canvas');
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
+  camera.position.set(0, 0, 5);
+
+  // Lights
+  scene.add(new THREE.AmbientLight(0x7c6aff, 0.4));
+  const pl1 = new THREE.PointLight(0x7c6aff, 2, 20); pl1.position.set(3, 3, 3); scene.add(pl1);
+  const pl2 = new THREE.PointLight(0xff6a9e, 1.5, 20); pl2.position.set(-3, -2, 2); scene.add(pl2);
+  const pl3 = new THREE.PointLight(0x6affda, 1, 15); pl3.position.set(0, 4, -2); scene.add(pl3);
+
+  // Central book group
+  const bookGroup = new THREE.Group();
+
+  const bookMat = new THREE.MeshPhongMaterial({ color: 0x1a1a30, emissive: 0x7c6aff, emissiveIntensity: 0.12, shininess: 80, specular: 0x7c6aff });
+  bookGroup.add(Object.assign(new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.8, 0.22), bookMat)));
+
+  const spineMesh = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.8, 0.24),
+    new THREE.MeshPhongMaterial({ color: 0x7c6aff, emissive: 0x7c6aff, emissiveIntensity: 0.4, shininess: 120 }));
+  spineMesh.position.x = -0.76; bookGroup.add(spineMesh);
+
+  const pagesMesh = new THREE.Mesh(new THREE.BoxGeometry(1.26, 1.72, 0.18),
+    new THREE.MeshPhongMaterial({ color: 0xeeeeff, emissive: 0x6affda, emissiveIntensity: 0.05, shininess: 20 }));
+  pagesMesh.position.x = 0.07; bookGroup.add(pagesMesh);
+
+  // Lines on cover
+  for (let i = 0; i < 5; i++) {
+    const l = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.04, 0.01),
+      new THREE.MeshBasicMaterial({ color: 0x7c6aff, transparent: true, opacity: 0.5 }));
+    l.position.set(0.1, 0.5 - i * 0.22, 0.12);
+    bookGroup.add(l);
+  }
+
+  bookGroup.rotation.set(0.15, 0.4, 0);
+  scene.add(bookGroup);
+
+  // Rings
+  function ring(r, t, col, rx, ry) {
+    const m = new THREE.Mesh(new THREE.TorusGeometry(r, t, 16, 100),
+      new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.22 }));
+    m.rotation.set(rx, ry, 0); scene.add(m); return m;
+  }
+  const r1 = ring(2.2, 0.008, 0x7c6aff, Math.PI/4, 0);
+  const r2 = ring(2.8, 0.006, 0xff6a9e, Math.PI/2.5, Math.PI/6);
+  const r3 = ring(3.4, 0.005, 0x6affda, Math.PI/3, Math.PI/3);
+
+  // Particles
+  const N = 180;
+  const pos = new Float32Array(N * 3), col = new Float32Array(N * 3);
+  const pCols = [new THREE.Color(0x7c6aff), new THREE.Color(0xff6a9e), new THREE.Color(0x6affda), new THREE.Color(0xffffff)];
+  for (let i = 0; i < N; i++) {
+    const r = 2.5 + Math.random() * 4, th = Math.random()*Math.PI*2, ph = Math.acos(2*Math.random()-1);
+    pos[i*3] = r*Math.sin(ph)*Math.cos(th); pos[i*3+1] = r*Math.sin(ph)*Math.sin(th); pos[i*3+2] = r*Math.cos(ph);
+    const c = pCols[Math.floor(Math.random()*4)];
+    col[i*3] = c.r; col[i*3+1] = c.g; col[i*3+2] = c.b;
+  }
+  const partGeo = new THREE.BufferGeometry();
+  partGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  partGeo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  const parts = new THREE.Points(partGeo, new THREE.PointsMaterial({ size: 0.04, vertexColors: true, transparent: true, opacity: 0.8 }));
+  scene.add(parts);
+
+  // Orbiting orbs
+  function orb(rad, color) {
+    const m = new THREE.Mesh(new THREE.SphereGeometry(rad, 16, 16),
+      new THREE.MeshPhongMaterial({ color, emissive: color, emissiveIntensity: 0.6, shininess: 100 }));
+    scene.add(m); return m;
+  }
+  const o1 = orb(0.12, 0x7c6aff), o2 = orb(0.09, 0xff6a9e), o3 = orb(0.10, 0x6affda);
+
+  let mx = 0, my = 0;
+  document.addEventListener('mousemove', e => { mx = (e.clientX/window.innerWidth - 0.5)*2; my = (e.clientY/window.innerHeight - 0.5)*2; });
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+
+  const clock = new THREE.Clock();
+  (function animate() {
+    requestAnimationFrame(animate);
+    const t = clock.getElapsedTime();
+
+    bookGroup.position.y = Math.sin(t * 0.8) * 0.15;
+    bookGroup.rotation.y = 0.4 + Math.sin(t * 0.5) * 0.15 + mx * 0.12;
+    bookGroup.rotation.x = 0.15 + my * 0.08;
+
+    r1.rotation.z = t * 0.3;
+    r2.rotation.z = -t * 0.2; r2.rotation.x = Math.PI/2.5 + t*0.15;
+    r3.rotation.y = t * 0.18;
+
+    o1.position.set(Math.cos(t*0.7)*2.2, Math.sin(t*0.7)*2.2*0.3, Math.sin(t*0.7)*0.5);
+    o2.position.set(Math.cos(t*0.5+2)*2.8*0.7, Math.sin(t*0.5+2)*2.8, Math.cos(t*0.3)*1.2);
+    o3.position.set(Math.sin(t*0.6+4)*2.0, Math.cos(t*0.4+1)*1.5, Math.sin(t*0.8)*2.0);
+
+    parts.rotation.y = t * 0.04; parts.rotation.x = t * 0.02;
+    pl1.intensity = 2 + Math.sin(t*1.5)*0.5;
+    pl2.intensity = 1.5 + Math.cos(t*1.2)*0.4;
+
+    camera.position.x += (mx*0.3 - camera.position.x) * 0.03;
+    camera.position.y += (-my*0.2 - camera.position.y) * 0.03;
+    camera.lookAt(scene.position);
+
+    renderer.render(scene, camera);
+  })();
+})();
+</script>
+
+<!-- ══ APP LOGIC ══ -->
 <script>
   const API = "http://localhost:8000";
   let currentFile = null;
 
-  async function uploadPDF() {
-    const file = document.getElementById("pdfFile").files[0];
-    if (!file) return alert("Please select a PDF file first!");
-    const form = new FormData();
-    form.append("file", file);
-    document.getElementById("uploadStatus").textContent = "Uploading...";
-    const res = await fetch(`${API}/upload`, { method: "POST", body: form });
-    const data = await res.json();
-    if (data.error) return alert(data.error);
-    currentFile = data.filename;
-    document.getElementById("uploadStatus").textContent = `✅ "${currentFile}" uploaded successfully!`;
+  const zone = document.getElementById('uploadZone');
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('dragover');
+    const f = e.dataTransfer.files[0];
+    if (f && f.type === 'application/pdf') uploadFile(f);
+  });
+
+  function handleFileSelect(input) { if (input.files[0]) uploadFile(input.files[0]); }
+
+  async function uploadFile(file) {
+    document.getElementById('uploadZoneTitle').textContent = file.name;
+    showStatus('uploadStatus', 'loading', 'Uploading...');
+    const form = new FormData(); form.append("file", file);
+    try {
+      const res = await fetch(`${API}/upload`, { method: "POST", body: form });
+      const data = await res.json();
+      if (data.error) return showStatus('uploadStatus', 'error', data.error);
+      currentFile = data.filename;
+      showStatus('uploadStatus', 'success', `✓ "${currentFile}" ready`);
+      setStep(2);
+    } catch(e) { showStatus('uploadStatus', 'error', 'Upload failed — is the server running?'); }
   }
 
   async function getSummary() {
-    if (!currentFile) return alert("Please upload a PDF first!");
-    document.getElementById("summaryOutput").style.display = "block";
-    document.getElementById("summaryOutput").textContent = "⏳ Generating summary...";
-    const form = new FormData();
-    form.append("filename", currentFile);
-    const res = await fetch(`${API}/summarize`, { method: "POST", body: form });
-    const data = await res.json();
-    document.getElementById("summaryOutput").textContent = data.summary || data.error;
+    if (!currentFile) return alert('Upload a PDF first!');
+    setLoading('summaryBtn', true, '✦ Generate Summary');
+    showOutput('summaryOutput', '⏳ Generating summary...');
+    const form = new FormData(); form.append("filename", currentFile);
+    try {
+      const res = await fetch(`${API}/summarize`, { method: "POST", body: form });
+      const data = await res.json();
+      showOutput('summaryOutput', data.summary || data.error); setStep(3);
+    } catch(e) { showOutput('summaryOutput', 'Error: ' + e.message); }
+    setLoading('summaryBtn', false, '✦ Generate Summary');
   }
 
   async function getQuiz() {
-    if (!currentFile) return alert("Please upload a PDF first!");
-    document.getElementById("quizOutput").style.display = "block";
-    document.getElementById("quizOutput").textContent = "⏳ Generating quiz...";
-    const form = new FormData();
-    form.append("filename", currentFile);
-    const res = await fetch(`${API}/quiz`, { method: "POST", body: form });
-    const data = await res.json();
-    document.getElementById("quizOutput").textContent = data.quiz || data.error;
+    if (!currentFile) return alert('Upload a PDF first!');
+    setLoading('quizBtn', true, '✦ Generate Quiz');
+    showOutput('quizOutput', '⏳ Generating quiz...');
+    const form = new FormData(); form.append("filename", currentFile);
+    try {
+      const res = await fetch(`${API}/quiz`, { method: "POST", body: form });
+      const data = await res.json();
+      showOutput('quizOutput', data.quiz || data.error); setStep(4);
+    } catch(e) { showOutput('quizOutput', 'Error: ' + e.message); }
+    setLoading('quizBtn', false, '✦ Generate Quiz');
   }
 
   async function chatWithNotes() {
-    if (!currentFile) return alert("Please upload a PDF first!");
-    const question = document.getElementById("chatQuestion").value.trim();
-    if (!question) return alert("Please type a question!");
-    document.getElementById("chatOutput").style.display = "block";
-    document.getElementById("chatOutput").textContent = "⏳ Thinking...";
-    const form = new FormData();
-    form.append("filename", currentFile);
-    form.append("question", question);
-    const res = await fetch(`${API}/chat`, { method: "POST", body: form });
-    const data = await res.json();
-    document.getElementById("chatOutput").textContent = data.answer || data.error;
+    if (!currentFile) return alert('Upload a PDF first!');
+    const q = document.getElementById('chatQuestion').value.trim();
+    if (!q) return alert('Type a question!');
+    setLoading('chatBtn', true, 'Ask ↗');
+    showOutput('chatOutput', '⏳ Thinking...');
+    const form = new FormData(); form.append("filename", currentFile); form.append("question", q);
+    try {
+      const res = await fetch(`${API}/chat`, { method: "POST", body: form });
+      const data = await res.json();
+      showOutput('chatOutput', data.answer || data.error);
+    } catch(e) { showOutput('chatOutput', 'Error: ' + e.message); }
+    setLoading('chatBtn', false, 'Ask ↗');
   }
-</script>
 
+  function showOutput(id, text) { const el = document.getElementById(id); el.style.display = 'block'; el.textContent = text; }
+
+  function showStatus(id, type, msg) {
+    const icon = type === 'success' ? '✓' : '<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:currentColor;animation:pulse 1.5s ease infinite;"></span>';
+    document.getElementById(id).innerHTML = `<div class="status-tag ${type === 'success' ? 'success' : 'loading'}">${icon} ${msg}</div>`;
+  }
+
+  function setLoading(id, loading, label) {
+    const b = document.getElementById(id);
+    b.disabled = loading;
+    b.innerHTML = loading ? '<div class="spinner"></div> Working...' : label;
+  }
+
+  function setStep(n) {
+    for (let i = 1; i <= 4; i++)
+      document.getElementById('step'+i).className = 'step-item' + (i < n ? ' done' : i === n ? ' active' : '');
+  }
+
+  document.querySelector('.hero-cta').addEventListener('click', e => {
+    e.preventDefault();
+    document.getElementById('app').scrollIntoView({ behavior: 'smooth' });
+  });
+</script>
 </body>
 </html>

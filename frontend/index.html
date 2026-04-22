@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>StudyBuddy AI 🎓</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #f0f4ff; color: #333; }
+    header { background: #4f46e5; color: white; padding: 20px 40px; }
+    header h1 { font-size: 1.8rem; }
+    header p { opacity: 0.85; font-size: 0.95rem; }
+    .container { max-width: 800px; margin: 30px auto; padding: 0 20px; }
+    .card { background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+    h2 { margin-bottom: 14px; color: #4f46e5; font-size: 1.1rem; }
+    input[type="file"] { margin-bottom: 10px; width: 100%; }
+    button { background: #4f46e5; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 0.95rem; margin-top: 8px; }
+    button:hover { background: #4338ca; }
+    textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.9rem; resize: vertical; }
+    .output { margin-top: 16px; background: #f8f9ff; border-left: 4px solid #4f46e5; padding: 14px; border-radius: 6px; white-space: pre-wrap; font-size: 0.9rem; line-height: 1.6; }
+    .status { font-size: 0.85rem; color: #6b7280; margin-top: 6px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>📚 StudyBuddy AI</h1>
+  <p>Upload your lecture notes and let AI help you study smarter</p>
+</header>
+
+<div class="container">
+
+  <!-- Upload -->
+  <div class="card">
+    <h2>📄 Step 1: Upload Your PDF</h2>
+    <input type="file" id="pdfFile" accept=".pdf" />
+    <button onclick="uploadPDF()">Upload PDF</button>
+    <p class="status" id="uploadStatus"></p>
+  </div>
+
+  <!-- Summarize -->
+  <div class="card">
+    <h2>🧠 Step 2: Summarize & Get Flashcards</h2>
+    <button onclick="getSummary()">Generate Summary + Flashcards</button>
+    <div class="output" id="summaryOutput" style="display:none"></div>
+  </div>
+
+  <!-- Quiz -->
+  <div class="card">
+    <h2>❓ Step 3: Take a Quiz</h2>
+    <button onclick="getQuiz()">Generate Quiz</button>
+    <div class="output" id="quizOutput" style="display:none"></div>
+  </div>
+
+  <!-- Chat -->
+  <div class="card">
+    <h2>💬 Step 4: Chat With Your Notes</h2>
+    <textarea id="chatQuestion" rows="3" placeholder="Ask anything about your notes e.g. 'Explain the main algorithm discussed'"></textarea>
+    <button onclick="chatWithNotes()">Ask StudyBuddy</button>
+    <div class="output" id="chatOutput" style="display:none"></div>
+  </div>
+
+</div>
+
+<script>
+  const API = "http://localhost:8000";
+  let currentFile = null;
+
+  async function uploadPDF() {
+    const file = document.getElementById("pdfFile").files[0];
+    if (!file) return alert("Please select a PDF file first!");
+    const form = new FormData();
+    form.append("file", file);
+    document.getElementById("uploadStatus").textContent = "Uploading...";
+    const res = await fetch(`${API}/upload`, { method: "POST", body: form });
+    const data = await res.json();
+    if (data.error) return alert(data.error);
+    currentFile = data.filename;
+    document.getElementById("uploadStatus").textContent = `✅ "${currentFile}" uploaded successfully!`;
+  }
+
+  async function getSummary() {
+    if (!currentFile) return alert("Please upload a PDF first!");
+    document.getElementById("summaryOutput").style.display = "block";
+    document.getElementById("summaryOutput").textContent = "⏳ Generating summary...";
+    const form = new FormData();
+    form.append("filename", currentFile);
+    const res = await fetch(`${API}/summarize`, { method: "POST", body: form });
+    const data = await res.json();
+    document.getElementById("summaryOutput").textContent = data.summary || data.error;
+  }
+
+  async function getQuiz() {
+    if (!currentFile) return alert("Please upload a PDF first!");
+    document.getElementById("quizOutput").style.display = "block";
+    document.getElementById("quizOutput").textContent = "⏳ Generating quiz...";
+    const form = new FormData();
+    form.append("filename", currentFile);
+    const res = await fetch(`${API}/quiz`, { method: "POST", body: form });
+    const data = await res.json();
+    document.getElementById("quizOutput").textContent = data.quiz || data.error;
+  }
+
+  async function chatWithNotes() {
+    if (!currentFile) return alert("Please upload a PDF first!");
+    const question = document.getElementById("chatQuestion").value.trim();
+    if (!question) return alert("Please type a question!");
+    document.getElementById("chatOutput").style.display = "block";
+    document.getElementById("chatOutput").textContent = "⏳ Thinking...";
+    const form = new FormData();
+    form.append("filename", currentFile);
+    form.append("question", question);
+    const res = await fetch(`${API}/chat`, { method: "POST", body: form });
+    const data = await res.json();
+    document.getElementById("chatOutput").textContent = data.answer || data.error;
+  }
+</script>
+
+</body>
+</html>

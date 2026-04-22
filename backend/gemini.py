@@ -1,11 +1,12 @@
-import google.generativeai as genai
 import os
 from dotenv import load_dotenv
+from google import genai
 
 load_dotenv()
 
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-model = genai.GenerativeModel("gemini-1.5-flash")
+client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+MODEL = "models/gemini-2.0-flash-lite"
+
 
 def summarize_text(text: str) -> str:
     prompt = f"""
@@ -16,9 +17,9 @@ def summarize_text(text: str) -> str:
     3. 🃏 Flashcards (5 Q&A pairs for revision)
 
     Study material:
-    {text[:8000]}  # Limit to avoid token overflow
+    {text[:8000]}
     """
-    response = model.generate_content(prompt)
+    response = client.models.generate_content(model=MODEL, contents=prompt)
     return response.text
 
 
@@ -37,7 +38,7 @@ def generate_quiz(text: str) -> str:
     Study material:
     {text[:8000]}
     """
-    response = model.generate_content(prompt)
+    response = client.models.generate_content(model=MODEL, contents=prompt)
     return response.text
 
 
@@ -52,5 +53,5 @@ def chat_with_notes(text: str, user_question: str) -> str:
 
     Student's question: {user_question}
     """
-    response = model.generate_content(prompt)
+    response = client.models.generate_content(model=MODEL, contents=prompt)
     return response.text
